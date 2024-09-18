@@ -32,7 +32,7 @@ namespace MpvieApi.Controllers
             try
             {
                 var movieCount = _context.Movie.Count();
-                var movieList = _mapper.Map<List<MovieViewListModel>>(_context.Movie.Include(x => x.Actors).Skip(pageIndex * pageSize).Take(pageSize).ToList());
+                var movieList = _mapper.Map<List<MovieDetailsViewModel>>(_context.Movie.Include(x => x.Actors).Skip(pageIndex * pageSize).Take(pageSize).ToList());
                     //.Select(x=> new MovieViewListModel
                     //{
                     //    Id = x.Id,
@@ -75,23 +75,23 @@ namespace MpvieApi.Controllers
             try
             {
                
-                var movie = _context.Movie.Include(x => x.Actors).Where(x=>x.Id==id)
-                   .Select(x => new MovieDetailsViewModel
-                   {
-                       Id = x.Id,
-                       Title = x.Title,
-                       Actors = x.Actors.Select(y => new ActorViewModel
-                       {
-                           Id = y.Id,
-                           Name = y.Name,
-                           DateOfBirth = y.DateOfBirth,
-                       }).ToList(),
-                       CoverImage = x.CoverImage,
-                       Language = x.Language,
-                       ReleaseDate = x.ReleaseDate,
-                      Description = x.Description
-                   })
-                    .FirstOrDefault();
+                var movie = _context.Movie.Include(x => x.Actors).Where(x=>x.Id==id).FirstOrDefault();
+                   //.Select(x => new MovieDetailsViewModel
+                   //{
+                   //    Id = x.Id,
+                   //    Title = x.Title,
+                   //    Actors = x.Actors.Select(y => new ActorViewModel
+                   //    {
+                   //        Id = y.Id,
+                   //        Name = y.Name,
+                   //        DateOfBirth = y.DateOfBirth,
+                   //    }).ToList(),
+                   //    CoverImage = x.CoverImage,
+                   //    Language = x.Language,
+                   //    ReleaseDate = x.ReleaseDate,
+                   //   Description = x.Description
+                   //})
+                   // .FirstOrDefault();
 
                 if (movie == null)
                 {
@@ -100,10 +100,12 @@ namespace MpvieApi.Controllers
                     return BadRequest(res);
                 }
 
+                var movieData = _mapper.Map<MovieDetailsViewModel>(movie);
 
                 res.Status = true;
                 res.Message = "Success";
-                res.Data =movie;
+                //res.Data =movie;
+                res.Data= movieData;
 
                 return Ok(res);
             }
@@ -138,40 +140,37 @@ namespace MpvieApi.Controllers
                         return BadRequest(responseModel);
                     }
 
-                    var postModel = new Movie()
-                    {
-                        Title = model.Title,
-                        ReleaseDate = model.ReleaseDate,
-                        Language = model.Language,
-                        CoverImage= model.CoverImage,
-                        Description = model.Description,
-                        Actors = actors,
+                    var postModel = _mapper.Map<Movie>(model);
+                    postModel.Actors = actors;
+                    //var postModel = new Movie()
+                    //{
+                    //    Title = model.Title,
+                    //    ReleaseDate = model.ReleaseDate,
+                    //    Language = model.Language,
+                    //    CoverImage= model.CoverImage,
+                    //    Description = model.Description,
+                    //    Actors = actors,
+                    //};
 
-
-                    };
                     _context.Movie.Add(postModel);
                     _context.SaveChanges();
 
-                    var responseData = new MovieDetailsViewModel
-                    {
-                        Id = postModel.Id,
-                        Title = postModel.Title,
-                        Actors = postModel.Actors.Select(y => new ActorViewModel
-                        {
-                            Id = y.Id,
-                            Name = y.Name,
-                            DateOfBirth = y.DateOfBirth,
-                        }).ToList(),
-                        CoverImage = postModel.CoverImage,
-                        Language = postModel.Language,
-                        ReleaseDate = postModel.ReleaseDate,
-                        Description = postModel.Description
-                    };
-
-
-
-
-
+                    var responseData=_mapper.Map<MovieDetailsViewModel>(postModel);
+                    //var responseData = new MovieDetailsViewModel
+                    //{
+                    //    Id = postModel.Id,
+                    //    Title = postModel.Title,
+                    //    Actors = postModel.Actors.Select(y => new ActorViewModel
+                    //    {
+                    //        Id = y.Id,
+                    //        Name = y.Name,
+                    //        DateOfBirth = y.DateOfBirth,
+                    //    }).ToList(),
+                    //    CoverImage = postModel.CoverImage,
+                    //    Language = postModel.Language,
+                    //    ReleaseDate = postModel.ReleaseDate,
+                    //    Description = postModel.Description
+                    //};
 
 
                     responseModel.Status = true;
