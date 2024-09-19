@@ -1,10 +1,15 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MpvieApi.Data;
 using MpvieApi.Entities;
 using MpvieApi.Models;
+using System.Net.Http.Headers;
+using System.Net.Mime;
+using System.IO;
+
 
 namespace MpvieApi.Controllers
 {
@@ -16,7 +21,7 @@ namespace MpvieApi.Controllers
         private readonly MovieDbContext _context;
         private readonly IMapper _mapper;
 
-        public MovieController(MovieDbContext context,IMapper mapper)
+        public MovieController(MovieDbContext context, IMapper mapper)
         {
             _context = context;
             _mapper = mapper;
@@ -24,34 +29,34 @@ namespace MpvieApi.Controllers
 
 
         [HttpGet]
-        public IActionResult Get(int pageIndex=0, int pageSize=10)
+        public IActionResult Get(int pageIndex = 0, int pageSize = 10)
         {
 
-            BaseResponseModel res=new BaseResponseModel();
+            BaseResponseModel res = new BaseResponseModel();
 
             try
             {
                 var movieCount = _context.Movie.Count();
                 var movieList = _mapper.Map<List<MovieDetailsViewModel>>(_context.Movie.Include(x => x.Actors).Skip(pageIndex * pageSize).Take(pageSize).ToList());
-                    //.Select(x=> new MovieViewListModel
-                    //{
-                    //    Id = x.Id,
-                    //    Title = x.Title,
-                    //    Actors=x.Actors.Select(y=> new ActorViewModel 
-                    //    { 
-                    //        Id = y.Id,
-                    //        Name = y.Name,
-                    //        DateOfBirth = y.DateOfBirth,
-                    //    }).ToList(),
-                    //    CoverImage = x.CoverImage,
-                    //    Language = x.Language,
-                    //    ReleaseDate = x.ReleaseDate
-                    //}).ToList();
-            
-                
-                res.Status=true;
+                //.Select(x=> new MovieViewListModel
+                //{
+                //    Id = x.Id,
+                //    Title = x.Title,
+                //    Actors=x.Actors.Select(y=> new ActorViewModel 
+                //    { 
+                //        Id = y.Id,
+                //        Name = y.Name,
+                //        DateOfBirth = y.DateOfBirth,
+                //    }).ToList(),
+                //    CoverImage = x.CoverImage,
+                //    Language = x.Language,
+                //    ReleaseDate = x.ReleaseDate
+                //}).ToList();
+
+
+                res.Status = true;
                 res.Message = "Success";
-                res.Data = new {Movies=movieList,Count=movieCount};
+                res.Data = new { Movies = movieList, Count = movieCount };
 
                 return Ok(res);
             }
@@ -62,10 +67,9 @@ namespace MpvieApi.Controllers
 
                 return BadRequest(res);
 
-            }        
+            }
         }
 
-        
         [HttpGet("{id}")]
         public IActionResult GetMovieById(int id)
         {
@@ -74,24 +78,24 @@ namespace MpvieApi.Controllers
 
             try
             {
-               
-                var movie = _context.Movie.Include(x => x.Actors).Where(x=>x.Id==id).FirstOrDefault();
-                   //.Select(x => new MovieDetailsViewModel
-                   //{
-                   //    Id = x.Id,
-                   //    Title = x.Title,
-                   //    Actors = x.Actors.Select(y => new ActorViewModel
-                   //    {
-                   //        Id = y.Id,
-                   //        Name = y.Name,
-                   //        DateOfBirth = y.DateOfBirth,
-                   //    }).ToList(),
-                   //    CoverImage = x.CoverImage,
-                   //    Language = x.Language,
-                   //    ReleaseDate = x.ReleaseDate,
-                   //   Description = x.Description
-                   //})
-                   // .FirstOrDefault();
+
+                var movie = _context.Movie.Include(x => x.Actors).Where(x => x.Id == id).FirstOrDefault();
+                //.Select(x => new MovieDetailsViewModel
+                //{
+                //    Id = x.Id,
+                //    Title = x.Title,
+                //    Actors = x.Actors.Select(y => new ActorViewModel
+                //    {
+                //        Id = y.Id,
+                //        Name = y.Name,
+                //        DateOfBirth = y.DateOfBirth,
+                //    }).ToList(),
+                //    CoverImage = x.CoverImage,
+                //    Language = x.Language,
+                //    ReleaseDate = x.ReleaseDate,
+                //   Description = x.Description
+                //})
+                // .FirstOrDefault();
 
                 if (movie == null)
                 {
@@ -105,7 +109,7 @@ namespace MpvieApi.Controllers
                 res.Status = true;
                 res.Message = "Success";
                 //res.Data =movie;
-                res.Data= movieData;
+                res.Data = movieData;
 
                 return Ok(res);
             }
@@ -121,7 +125,6 @@ namespace MpvieApi.Controllers
 
 
         [HttpPost]
-
         public IActionResult AddMovie(CreateMovieViewMode model)
         {
             BaseResponseModel responseModel = new BaseResponseModel();
@@ -130,9 +133,9 @@ namespace MpvieApi.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    var actors=_context.Person.Where(x=> model.Actors.Contains(x.Id)).ToList();
+                    var actors = _context.Person.Where(x => model.Actors.Contains(x.Id)).ToList();
 
-                    if(actors.Count() != model.Actors.Count())
+                    if (actors.Count() != model.Actors.Count())
                     {
                         responseModel.Status = false;
                         responseModel.Message = "Inavlid actor Ids";
@@ -155,7 +158,7 @@ namespace MpvieApi.Controllers
                     _context.Movie.Add(postModel);
                     _context.SaveChanges();
 
-                    var responseData=_mapper.Map<MovieDetailsViewModel>(postModel);
+                    var responseData = _mapper.Map<MovieDetailsViewModel>(postModel);
                     //var responseData = new MovieDetailsViewModel
                     //{
                     //    Id = postModel.Id,
@@ -189,20 +192,19 @@ namespace MpvieApi.Controllers
 
                     return BadRequest(responseModel);
                 }
-                               
+
             }
             catch (Exception)
             {
                 responseModel.Status = false;
                 responseModel.Message = "Validation failed";
-               
+
                 return BadRequest(responseModel);
             }
         }
 
-        
-        [HttpPut]
 
+        [HttpPut]
         public IActionResult UpdateMovie(CreateMovieViewMode model)
         {
             BaseResponseModel responseModel = new BaseResponseModel();
@@ -217,9 +219,9 @@ namespace MpvieApi.Controllers
                         responseModel.Message = "Id cannot be less than or equal to 0";
 
                         return BadRequest(responseModel);
-                  
-                        
-                     }
+
+
+                    }
 
 
                     var actors = _context.Person.Where(x => model.Actors.Contains(x.Id)).ToList();
@@ -233,7 +235,7 @@ namespace MpvieApi.Controllers
                     }
                     var movieDetails = _context.Movie.Include(x => x.Actors).Where(x => x.Id == model.Id).FirstOrDefault();
 
-                    if(movieDetails == null)
+                    if (movieDetails == null)
                     {
                         responseModel.Status = false;
                         responseModel.Message = "Movie Not Found";
@@ -251,7 +253,7 @@ namespace MpvieApi.Controllers
 
                     var removedActors = movieDetails.Actors.Where(x => !model.Actors.Contains(x.Id)).ToList();
 
-                    foreach(var actor in removedActors)
+                    foreach (var actor in removedActors)
                     {
                         movieDetails.Actors.Remove(actor);
                     }
@@ -260,11 +262,11 @@ namespace MpvieApi.Controllers
 
                     var addedActors = actors.Except(movieDetails.Actors).ToList();
 
-                    foreach(var actor in addedActors)
+                    foreach (var actor in addedActors)
                     {
                         movieDetails.Actors.Add(actor);
                     }
-                                      
+
                     _context.SaveChanges();
 
                     var responseData = new MovieDetailsViewModel
@@ -309,6 +311,100 @@ namespace MpvieApi.Controllers
 
                 return BadRequest(responseModel);
             }
+        }
+
+        [HttpDelete("{id}")]
+        public IActionResult DeleteMovie(int id)
+        {
+            BaseResponseModel res = new BaseResponseModel();
+
+            if (id <= 0)
+            {
+
+
+                res.Status = false;
+                res.Message = "Inavalid Id";
+                return BadRequest(res);
+
+            }
+            try
+            {
+                var movieDetails = _context.Movie.Where(x => x.Id == id).FirstOrDefault();
+                if (movieDetails == null)
+                {
+
+                    res.Status = false;
+                    res.Message = "Reord does not exist";
+                    return BadRequest(res);
+                }
+
+                _context.Movie.Remove(movieDetails);
+                _context.SaveChanges();
+
+                res.Status = true;
+                res.Message = $"{movieDetails.Title} Record Deleted sucessfully";
+
+                return Ok(res);
+
+            }
+            catch (Exception)
+            {
+                res.Status = false;
+                res.Message = "Something went wrong";
+                return BadRequest(res);
+            }
+
+
+        }
+
+
+        [HttpPost]
+        [Route("upload")]
+        public async Task<IActionResult> UploadMoviePoster(IFormFile imageFile)
+        {
+            try
+            {
+                var fileName = ContentDispositionHeaderValue.Parse(imageFile.ContentDisposition).FileName.TrimStart('\"').TrimEnd('\"');
+
+                string newPath = @"D:\movie-Image";
+
+                if (!Directory.Exists(newPath))
+                {
+                    Directory.CreateDirectory(newPath);
+                }
+
+                string[] allowedExtensions = new string[] { ".jpg", ".jpeg", ".png" };
+                if (!allowedExtensions.Contains(Path.GetExtension(fileName)))
+                {
+
+                    return BadRequest(new BaseResponseModel
+                    {
+                        Status = false,
+                        Message = "Extension not allowed"
+                    });
+                }
+                string newFileName = Guid.NewGuid() + Path.GetExtension(fileName);
+                string fullFilePath = Path.Combine(newPath, newFileName);
+
+                using (var stram = new FileStream(fullFilePath, FileMode.Create))
+                {
+                    await imageFile.CopyToAsync(stram);
+                }
+                //return Ok(new { path = fullFilePath });
+                return Ok(new { ProfileImage = $"{HttpContext.Request.Scheme}:// {HttpContext.Request.Host}/Staticfiles/{newFileName}" });
+
+            }
+            catch (Exception)
+            {
+
+                return BadRequest(new BaseResponseModel
+                {
+                    Status = false,
+                    Message = "Something Wrong"
+                }); ;
+            }
+
+
         }
 
 
